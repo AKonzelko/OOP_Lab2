@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/arturkonzelko/OOP_Lab2/main'
+relocations:     []
+...
