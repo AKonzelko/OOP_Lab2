@@ -8,12 +8,24 @@ static double cross(const Point& A, const Point& B, const Point& C) {
     return (B.x - A.x)*(C.y - A.y) - (B.y - A.y)*(C.x - A.x);
 }
 
+double distance(const Point& p1, const Point& p2) {
+    return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
+}
+
+static double heronArea(const Point& A, const Point& B, const Point& C) {
+    double a = distance(A, B);
+    double b = distance(B, C);
+    double c = distance(C, A);
+    double s = (a + b + c) / 2.0;
+    return sqrt(s * (s - a) * (s - b) * (s - c));
+}
+
 double Triangle::area() const {
-    return fabs(cross(A, B, C)) / 2.0;
+    return heronArea(A, B, C);
 }
 
 bool Triangle::isDegenerate() const {
-    return area() < 1e-9;
+    return fabs(cross(A, B, C)) < 1e-9;
 }
 
 bool Triangle::containsByCrossProduct(const Point& P) const {
@@ -27,15 +39,14 @@ bool Triangle::containsByCrossProduct(const Point& P) const {
     return !(has_neg && has_pos);
 }
 
-bool Triangle::containsByBarycentric(const Point& P) const {
-    double denom = (B.y - C.y)*(A.x - C.x) + (C.x - B.x)*(A.y - C.y);
-    if (fabs(denom) < 1e-9) return false; // Вироджений трикутник
+bool Triangle::containsByHeron(const Point& P) const {
+    double S_main = area();
+    double S1 = heronArea(A, B, P);
+    double S2 = heronArea(B, C, P);
+    double S3 = heronArea(C, A, P);
+    double S_sum = S1 + S2 + S3;
 
-    double w1 = ((B.y - C.y)*(P.x - C.x) + (C.x - B.x)*(P.y - C.y)) / denom;
-    double w2 = ((C.y - A.y)*(P.x - C.x) + (A.x - C.x)*(P.y - C.y)) / denom;
-    double w3 = 1 - w1 - w2;
-
-    return (w1 >= 0) && (w2 >= 0) && (w3 >= 0);
+    return fabs(S_main - S_sum) < 1e-9;
 }
 
 bool Triangle::isOnEdge(const Point& P) const {
@@ -55,19 +66,16 @@ void runProgram() {
 
     cout << "Введіть координати точки A (x y): ";
     cin >> tri.A.x >> tri.A.y;
-
     cout << "Введіть координати точки B (x y): ";
     cin >> tri.B.x >> tri.B.y;
-
     cout << "Введіть координати точки C (x y): ";
     cin >> tri.C.x >> tri.C.y;
 
     if (tri.isDegenerate()) {
-        cout << "Трикутник є виродженим (його площа = 0)." << endl;
-        return;
+        cout << "Трикутник є виродженим (його площа ≈ 0)." << endl;
     }
 
-    cout << "Оберіть метод (1 - векторний добуток, 2 - барицентричні координати): ";
+    cout << "Оберіть метод (1 - Векторний добуток, 2 - Герон): ";
     cin >> method;
 
     int n;
@@ -83,7 +91,7 @@ void runProgram() {
         if (method == 1) {
             inside = tri.containsByCrossProduct(P);
         } else if (method == 2) {
-            inside = tri.containsByBarycentric(P);
+            inside = tri.containsByHeron(P);
         } else {
             cout << "Невідомий метод!" << endl;
             return;
